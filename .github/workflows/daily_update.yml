@@ -1,0 +1,32 @@
+name: Daily Flat Hunt Update
+
+on:
+  schedule:
+    - cron: '30 3 * * *'   # 9:00am IST (3:30am UTC)
+  workflow_dispatch:        # allow manual trigger from GitHub UI
+
+jobs:
+  scrape-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Scrape and generate HTML
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+        run: python scrape.py
+
+      - name: Commit and push if there are changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html all_posts.json
+          git diff --staged --quiet || git commit -m "Daily update: $(date +'%Y-%m-%d')"
+          git push
