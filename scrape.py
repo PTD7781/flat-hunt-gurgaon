@@ -86,6 +86,19 @@ print(f'Total posts: {len(all_posts)}')
 
 # ── HTML generation ───────────────────────────────────────────────────────────
 
+RELEVANT_KEYWORDS = [
+    'flatmate', 'flat mate', 'roommate', 'room mate',
+    'flat available', 'room available', 'accommodation',
+    'looking for flat', 'need flat', 'flat needed',
+    'pg ', 'paying guest', 'bhk', 'sharing',
+    'gurgaon', 'gurugram', 'sector',
+    'female', 'girl', 'women', 'lady', 'ladies',
+]
+
+def is_relevant(p):
+    text = (p.get('message') or '').lower()
+    return bool(text) and any(kw in text for kw in RELEVANT_KEYWORDS)
+
 def summarize(text, max_chars=300):
     if not text: return 'No text content.'
     text = re.sub(r'http\S+', '', text)
@@ -137,9 +150,11 @@ def build_card(p):
         url=p.get('url', '#'),
     )
 
-cards = '\n'.join(build_card(p) for p in all_posts)
+relevant_posts = [p for p in all_posts if is_relevant(p)]
+cards = '\n'.join(build_card(p) for p in relevant_posts)
 date_str = datetime.now().strftime('%B %d, %Y')
 
+display_count = len(relevant_posts)
 html = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -172,7 +187,7 @@ html = """<!DOCTYPE html>
 {cards}
   </div>
 </body>
-</html>""".format(count=len(all_posts), date=date_str, cards=cards)
+</html>""".format(count=display_count, date=date_str, cards=cards)
 
 Path('index.html').write_text(html, encoding='utf-8')
 print('index.html rebuilt.')
